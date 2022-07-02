@@ -1,5 +1,6 @@
 ﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  ; Enable warnings to assist with detecting common errors.
+ppath := "" ; global variable
 
 ;^ for Ctrl
 ;! for Alt
@@ -25,10 +26,23 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
    
 !g::Run, chrome.exe https://www.google.com
 
-!d::Run, """%USERPROFILE%\Downloads"""
+!d::
+{
+  FOLDERID_Downloads := "{374DE290-123F-4565-9164-39C4925E467B}"
+  VarSetCapacity(CLSID, 16)
+  DllCall("ole32\CLSIDFromString", "Str", FOLDERID_Downloads, "Ptr", &CLSID)
+  DllCall("shell32\SHGetKnownFolderPath", "Ptr", &CLSID, "UInt", 0, "Ptr", 0, "Ptr*", ppath)
+  dir := StrGet(ppath, "UTF-16")
+  DllCall("ole32\CoTaskMemFree", "ptr", ppath)
+  VarSetCapacity(downloads, (261 + !A_IsUnicode) << !!A_IsUnicode)
+  DllCall("ExpandEnvironmentStrings", "Str", dir, "Str", downloads, "UInt", 260)
+  Run, % downloads
+  Return
+}
 
 
 
+; CTRL+SHIFT+C  search in google
 ^+c::
 {
  Send, ^c
